@@ -1,0 +1,20 @@
+Hướng dẫn onboarding — Công ty ABC
+
+Ngày đầu tiên nhân viên nhận thẻ ra vào, tài khoản email và máy tính xách tay.
+Phòng IT bàn giao máy tính trong tối đa 4 giờ làm việc kể từ khi có phiếu yêu cầu.
+Thời gian thử việc của nhân viên mới là 60 ngày.
+Trong 7 ngày đầu phải hoàn thành đào tạo an ninh thông tin dài 2 giờ.
+Trong 7 ngày đầu phải hoàn thành đào tạo văn hóa công ty dài 3 giờ.
+Mỗi nhân viên mới có một người đồng hành hỗ trợ trong 30 ngày.
+Buổi trao đổi 1:1 đầu tiên với quản lý diễn ra vào ngày làm việc thứ 5.
+Hợp đồng lao động phải được ký trong vòng 3 ngày làm việc kể từ ngày nhận việc.
+Lương thử việc bằng 85% lương chính thức ghi trong thư mời.
+Bảo hiểm xã hội được đóng từ tháng làm việc đầu tiên.
+Tài khoản phần mềm nội bộ được mở trong 1 ngày làm việc.
+Nhân viên mới được cấp 2 áo đồng phục trong tuần đầu.
+Quy định chấm công: có mặt trước 8 giờ 30, tan ca lúc 17 giờ 30.
+Nghỉ trưa 60 phút, từ 12 giờ 00 đến 13 giờ 00.
+Địa điểm làm việc mặc định là tầng 8, tòa nhà ABC, quận 1.
+Mật khẩu tài khoản phải đổi trong lần đăng nhập đầu tiên và dài tối thiểu 10 ký tự.
+Tuần thứ 2 nhân viên trình bày hiểu biết về sản phẩm trong 15 phút với nhóm.
+Kết thúc thử việc, quản lý gửi đánh giá trước ngày thứ 55.

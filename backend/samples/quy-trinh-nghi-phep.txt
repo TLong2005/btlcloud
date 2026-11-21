@@ -1,0 +1,20 @@
+Quy trình nghỉ phép — Công ty ABC
+
+Nhân viên chính thức được nghỉ phép năm 12 ngày làm việc mỗi năm dương lịch.
+Nhân viên thử việc được cộng 1 ngày phép cho mỗi tháng đã làm đủ.
+Đơn nghỉ 1 hoặc 2 ngày phải gửi trước ít nhất 3 ngày làm việc.
+Đơn nghỉ từ 3 ngày trở lên phải gửi trước ít nhất 7 ngày làm việc.
+Quản lý trực tiếp phải phê duyệt hoặc từ chối trong vòng 2 ngày làm việc.
+Nghỉ ốm có giấy khám của cơ sở y tế được hưởng 100% lương tối đa 30 ngày mỗi năm.
+Từ ngày ốm thứ 31 trở đi, mức hưởng là 75% lương theo hợp đồng.
+Phép năm chưa dùng được chuyển sang năm sau tối đa 5 ngày.
+Số ngày phép chuyển sang hết hạn vào ngày 31 tháng 3.
+Nghỉ không lương tối đa 10 ngày mỗi năm và cần giám đốc khối phê duyệt.
+Đơn phép nộp trên hệ thống nhân sự, không gửi bằng email cá nhân.
+Ngày nghỉ lễ theo Bộ luật Lao động không bị trừ vào 12 ngày phép năm.
+Mỗi ngày nghỉ vượt quỹ phép bị trừ đúng 1 ngày lương cơ bản.
+Trường hợp khẩn cấp phải báo quản lý trong 24 giờ và nộp đơn trong 2 ngày làm việc.
+Phòng nhân sự chốt quỹ phép vào ngày 25 hàng tháng.
+Khiếu nại số dư phép phải gửi trong 5 ngày làm việc kể từ ngày chốt.
+Nhân viên làm việc đủ 5 năm được cộng thêm 1 ngày phép thâm niên mỗi năm.
+Phép thâm niên tối đa là 3 ngày và được cộng vào quỹ 12 ngày phép năm.
