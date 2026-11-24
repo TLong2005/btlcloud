@@ -46,7 +46,8 @@ export class ConversationsService {
   constructor(private readonly db: DatabaseService) {}
 
   async list(tenantId: string, userId: string): Promise<ConversationSummary[]> {
-    const result = await this.db.query<ConversationRow>(
+    const result = await this.db.tenantQuery<ConversationRow>(
+      tenantId,
       `SELECT c.id, c.title, c.created_at, c.updated_at
        FROM conversations c
        WHERE c.tenant_id = $1
@@ -67,7 +68,8 @@ export class ConversationsService {
 
   async get(tenantId: string, userId: string, id: string): Promise<ConversationDetail> {
     const conversation = await this.findOwned(tenantId, userId, id);
-    const turns = await this.db.query<TurnRow>(
+    const turns = await this.db.tenantQuery<TurnRow>(
+      tenantId,
       `SELECT id, question, answer, model, insufficient_data, sources, created_at
        FROM chat_turns
        WHERE conversation_id = $1
@@ -83,7 +85,7 @@ export class ConversationsService {
   }
 
   async remove(tenantId: string, userId: string, id: string): Promise<void> {
-    const result = await this.db.query(
+    const result = await this.db.tenantQuery(tenantId,
       `DELETE FROM conversations
        WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,
       [id, tenantId, userId],
@@ -102,7 +104,7 @@ export class ConversationsService {
     if (!conversationId) {
       const id = randomUUID();
       const title = conversationTitle(question);
-      await this.db.query(
+      await this.db.tenantQuery(tenantId,
         `INSERT INTO conversations (id, tenant_id, user_id, title)
          VALUES ($1, $2, $3, $4)`,
         [id, tenantId, userId, title],
@@ -124,7 +126,7 @@ export class ConversationsService {
     insufficientData: boolean;
     sources: AskSource[];
   }): Promise<void> {
-    await this.db.transaction(async (query) => {
+    await this.db.asTenant(input.tenantId, async (query) => {
       const updated = await query<{ id: string }>(
         `UPDATE conversations
          SET updated_at = clock_timestamp()
@@ -156,7 +158,7 @@ export class ConversationsService {
   }
 
   async removeIfEmpty(tenantId: string, userId: string, id: string): Promise<void> {
-    await this.db.query(
+    await this.db.tenantQuery(tenantId,
       `DELETE FROM conversations c
        WHERE c.id = $1
          AND c.tenant_id = $2
@@ -173,7 +175,8 @@ export class ConversationsService {
     userId: string,
     id: string,
   ): Promise<ConversationRow> {
-    const result = await this.db.query<ConversationRow>(
+    const result = await this.db.tenantQuery<ConversationRow>(
+      tenantId,
       `SELECT id, title, created_at, updated_at
        FROM conversations
        WHERE id = $1 AND tenant_id = $2 AND user_id = $3`,

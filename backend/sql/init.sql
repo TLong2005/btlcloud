@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS documents (
   filename TEXT NOT NULL,
   s3_key TEXT NOT NULL,
   size_bytes BIGINT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('UPLOADED', 'PROCESSING', 'READY', 'FAILED')),
+  status TEXT NOT NULL,
   error_message TEXT,
   chunk_count INTEGER NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -75,3 +75,39 @@ CREATE INDEX IF NOT EXISTS chat_turns_conversation_id_idx
 
 CREATE INDEX IF NOT EXISTS chat_turns_owner_idx
   ON chat_turns (tenant_id, user_id, conversation_id, created_at);
+
+ALTER TABLE documents DROP CONSTRAINT IF EXISTS documents_status_check;
+
+UPDATE documents SET status = 'EXTRACTING' WHERE status = 'PROCESSING';
+
+ALTER TABLE documents
+  ADD CONSTRAINT documents_status_check
+  CHECK (status IN ('UPLOADED', 'EXTRACTING', 'EMBEDDING', 'READY', 'FAILED'));
+
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON documents;
+CREATE POLICY tenant_isolation ON documents
+  USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+  WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
+
+ALTER TABLE chunks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chunks FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON chunks;
+CREATE POLICY tenant_isolation ON chunks
+  USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+  WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
+
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON conversations;
+CREATE POLICY tenant_isolation ON conversations
+  USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+  WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);
+
+ALTER TABLE chat_turns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_turns FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS tenant_isolation ON chat_turns;
+CREATE POLICY tenant_isolation ON chat_turns
+  USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid)
+  WITH CHECK (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid);

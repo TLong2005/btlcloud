@@ -1,4 +1,10 @@
-export type DocumentStatus = "UPLOADED" | "PROCESSING" | "READY" | "FAILED";
+export type DocumentStatus =
+  | "UPLOADED"
+  | "EXTRACTING"
+  | "EMBEDDING"
+  | "PROCESSING"
+  | "READY"
+  | "FAILED";
 
 export type DocumentRecord = {
   id: string;

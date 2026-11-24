@@ -58,7 +58,12 @@ function FileGlyph({ filename }: { filename: string }) {
 }
 
 function isPendingStatus(doc: DocumentRecord) {
-  return doc.status === "UPLOADED" || doc.status === "PROCESSING";
+  return (
+    doc.status === "UPLOADED" ||
+    doc.status === "EXTRACTING" ||
+    doc.status === "EMBEDDING" ||
+    doc.status === "PROCESSING"
+  );
 }
 
 export default function DocumentsPage() {
@@ -82,7 +87,7 @@ export default function DocumentsPage() {
     queryFn: () => api<DocumentRecord[]>("/api/documents"),
     refetchInterval: (query) => {
       const docs = query.state.data;
-      if (!docs?.some((doc) => doc.status === "UPLOADED" || doc.status === "PROCESSING")) {
+      if (!docs?.some((doc) => isPendingStatus(doc))) {
         return false;
       }
       return 3000;

@@ -40,6 +40,8 @@ const ASSISTANT_PROMPT = [
 
 const STATUS_LABEL: Record<string, string> = {
   UPLOADED: 'Đã tải lên',
+  EXTRACTING: 'Đang trích chữ',
+  EMBEDDING: 'Đang tạo vector',
   PROCESSING: 'Đang xử lý',
   READY: 'Sẵn sàng',
   FAILED: 'Lỗi',
@@ -233,7 +235,8 @@ export class AskService {
   ): AsyncGenerator<AskStreamEvent> {
     let catalog = 'Chưa có tài liệu nào.';
     try {
-      const result = await this.db.query<{ filename: string; status: string }>(
+      const result = await this.db.tenantQuery<{ filename: string; status: string }>(
+        tenantId,
         `SELECT filename, status
          FROM documents
          WHERE tenant_id = $1
@@ -285,7 +288,8 @@ export class AskService {
     question: string,
     count: number,
   ): Promise<ChunkRow[]> {
-    const result = await this.db.query<ChunkRow>(
+    const result = await this.db.tenantQuery<ChunkRow>(
+      tenantId,
       `SELECT c.document_id, c.content, d.filename, 1 AS similarity
        FROM chunks c
        JOIN documents d
@@ -333,7 +337,8 @@ export class AskService {
     question: string,
     patterns: string[],
   ): Promise<ChunkRow[]> {
-    const models = await this.db.query<{ embedding_model: string }>(
+    const models = await this.db.tenantQuery<{ embedding_model: string }>(
+      tenantId,
       `SELECT DISTINCT c.embedding_model
        FROM chunks c
        JOIN documents d
@@ -369,7 +374,8 @@ export class AskService {
     patterns: string[],
     model: string,
   ): Promise<ChunkRow[]> {
-    const result = await this.db.query<ChunkRow>(
+    const result = await this.db.tenantQuery<ChunkRow>(
+      tenantId,
       `SELECT document_id, filename, content, similarity
        FROM (
          SELECT c.document_id, c.content, d.filename,
@@ -398,7 +404,8 @@ export class AskService {
   }
 
   private async loadReadyChunks(tenantId: string, question: string): Promise<ChunkRow[]> {
-    const result = await this.db.query<ChunkRow>(
+    const result = await this.db.tenantQuery<ChunkRow>(
+      tenantId,
       `SELECT c.document_id, c.content, d.filename, 1 AS similarity
        FROM chunks c
        JOIN documents d

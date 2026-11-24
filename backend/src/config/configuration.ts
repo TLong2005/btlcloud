@@ -6,6 +6,9 @@ export interface AppConfig {
   port: number;
   databaseUrl: string | null;
   dbSecretArn: string | null;
+  dbHost: string | null;
+  dbPort: number | null;
+  dbName: string | null;
   awsRegion: string;
   jwtSecret: string;
   jwtExpiresIn: string;
@@ -17,6 +20,7 @@ export interface AppConfig {
   bedrockChatModelId: string | null;
   bedrockEmbeddingModelId: string;
   openaiApiKey: string | null;
+  openaiSecretArn: string | null;
   openaiBaseUrl: string;
   openaiChatModel: string;
   openaiEmbeddingModel: string;
@@ -75,6 +79,11 @@ export function loadConfig(): AppConfig {
   if (!databaseUrl && !dbSecretArn) {
     throw new Error('Set DATABASE_URL or DB_SECRET_ARN');
   }
+  const openaiApiKey = (process.env.OPENAI_API_KEY ?? '').trim() || null;
+  const openaiSecretArn = (process.env.OPENAI_SECRET_ARN ?? '').trim() || null;
+  if (aiDriver === 'openai' && !openaiApiKey && !openaiSecretArn) {
+    throw new Error('Set OPENAI_API_KEY or OPENAI_SECRET_ARN');
+  }
 
   const thresholdRaw = (process.env.SIMILARITY_THRESHOLD ?? '').trim();
   const similarityThreshold = thresholdRaw === '' ? 0.3 : Number(thresholdRaw);
@@ -99,6 +108,9 @@ export function loadConfig(): AppConfig {
     port,
     databaseUrl,
     dbSecretArn,
+    dbHost: (process.env.DB_HOST ?? '').trim() || null,
+    dbPort: optionalPort('DB_PORT'),
+    dbName: (process.env.DB_NAME ?? '').trim() || null,
     awsRegion: (process.env.AWS_REGION ?? '').trim() || 'ap-southeast-1',
     jwtSecret: required('JWT_SECRET', process.env.JWT_SECRET),
     jwtExpiresIn: (process.env.JWT_EXPIRES_IN ?? '').trim() || '8h',
@@ -119,11 +131,9 @@ export function loadConfig(): AppConfig {
         : (process.env.BEDROCK_CHAT_MODEL_ID ?? '').trim() || null,
     bedrockEmbeddingModelId:
       (process.env.BEDROCK_EMBEDDING_MODEL_ID ?? '').trim() ||
-      'amazon.titan-embed-text-v2:0',
-    openaiApiKey:
-      aiDriver === 'openai'
-        ? required('OPENAI_API_KEY', process.env.OPENAI_API_KEY)
-        : (process.env.OPENAI_API_KEY ?? '').trim() || null,
+      'cohere.embed-multilingual-v3',
+    openaiApiKey,
+    openaiSecretArn,
     openaiBaseUrl:
       (process.env.OPENAI_BASE_URL ?? '').trim() || 'https://api.openai.com/v1',
     openaiChatModel:
@@ -138,6 +148,18 @@ export function loadConfig(): AppConfig {
     maxReceiveCount,
     workerArtificialDelayMs,
   };
+}
+
+function optionalPort(name: string): number | null {
+  const raw = (process.env[name] ?? '').trim();
+  if (raw === '') {
+    return null;
+  }
+  const port = Number(raw);
+  if (!Number.isInteger(port) || port <= 0) {
+    throw new Error(`${name} must be a positive integer`);
+  }
+  return port;
 }
 
 function numberFromEnv(name: string, fallback: number, min: number): number {

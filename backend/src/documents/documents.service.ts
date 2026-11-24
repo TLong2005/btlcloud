@@ -68,7 +68,7 @@ export class DocumentsService {
     const id = randomUUID();
     const s3Key = documentStorageKey(tenantId, id, accepted.filename);
     await this.storage.putObject(s3Key, accepted.buffer, CONTENT_TYPES[accepted.extension]);
-    await this.db.query(
+    await this.db.tenantQuery(tenantId,
       `INSERT INTO documents
          (id, tenant_id, filename, s3_key, size_bytes, status, error_message, chunk_count)
        VALUES ($1, $2, $3, $4, $5, 'UPLOADED', NULL, 0)`,
@@ -83,7 +83,8 @@ export class DocumentsService {
   }
 
   async list(tenantId: string): Promise<DocumentView[]> {
-    const result = await this.db.query<DocumentRow>(
+    const result = await this.db.tenantQuery<DocumentRow>(
+      tenantId,
       `SELECT id, filename, s3_key, size_bytes, status, error_message, chunk_count, created_at
        FROM documents
        WHERE tenant_id = $1
@@ -118,7 +119,8 @@ export class DocumentsService {
         `Tên tệp phải giữ đuôi ${currentExtension || 'gốc'}`,
       );
     }
-    const result = await this.db.query<DocumentRow>(
+    const result = await this.db.tenantQuery<DocumentRow>(
+      tenantId,
       `UPDATE documents
        SET filename = $3
        WHERE id = $1 AND tenant_id = $2
@@ -140,7 +142,7 @@ export class DocumentsService {
     const row = await this.findOwned(tenantId, id);
     const accepted = this.acceptFile(file);
     const s3Key = replacementStorageKey(tenantId, id, accepted.filename, randomUUID());
-    await this.db.transaction(async (query) => {
+    await this.db.asTenant(tenantId, async (query) => {
       await query(
         `DELETE FROM chunks WHERE document_id = $1 AND tenant_id = $2`,
         [id, tenantId],
@@ -165,7 +167,7 @@ export class DocumentsService {
     try {
       await this.storage.putObject(s3Key, accepted.buffer, CONTENT_TYPES[accepted.extension]);
     } catch (err) {
-      await this.db.query(
+      await this.db.tenantQuery(tenantId,
         `UPDATE documents
          SET status = 'FAILED', error_message = $3
          WHERE id = $1 AND tenant_id = $2 AND s3_key = $4`,
@@ -186,7 +188,7 @@ export class DocumentsService {
   async remove(tenantId: string, id: string): Promise<void> {
     const row = await this.findOwned(tenantId, id);
     await this.storage.deleteObject(row.s3_key);
-    await this.db.transaction(async (query) => {
+    await this.db.asTenant(tenantId, async (query) => {
       await query(
         `DELETE FROM chunks WHERE document_id = $1 AND tenant_id = $2`,
         [id, tenantId],
@@ -229,7 +231,8 @@ export class DocumentsService {
     if (!isUuid(id)) {
       throw new NotFoundException('Không tìm thấy tài liệu');
     }
-    const result = await this.db.query<DocumentRow>(
+    const result = await this.db.tenantQuery<DocumentRow>(
+      tenantId,
       `SELECT id, filename, s3_key, size_bytes, status, error_message, chunk_count, created_at
        FROM documents
        WHERE id = $1 AND tenant_id = $2`,

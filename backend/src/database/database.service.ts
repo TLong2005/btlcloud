@@ -17,6 +17,9 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
       databaseUrl: this.config.get<string | null>('databaseUrl') ?? null,
       dbSecretArn: this.config.get<string | null>('dbSecretArn') ?? null,
       awsRegion: this.config.getOrThrow<string>('awsRegion'),
+      dbHost: this.config.get<string | null>('dbHost') ?? null,
+      dbPort: this.config.get<number | null>('dbPort') ?? null,
+      dbName: this.config.get<string | null>('dbName') ?? null,
     });
     this.pool = new Pool(poolConfig);
     this.pool.on('error', (err) => {
@@ -39,12 +42,19 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     return this.pool.query<T>(sql, params);
   }
 
-  async transaction<T>(
-    fn: (query: QueryFn) => Promise<T>,
-  ): Promise<T> {
+  tenantQuery<T extends QueryResultRow = QueryResultRow>(
+    tenantId: string,
+    sql: string,
+    params: unknown[] = [],
+  ): Promise<QueryResult<T>> {
+    return this.asTenant(tenantId, (query) => query<T>(sql, params));
+  }
+
+  async asTenant<T>(tenantId: string, fn: (query: QueryFn) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await client.query(`SELECT set_config('app.tenant_id', $1, true)`, [tenantId]);
       const result = await fn((sql, params = []) => client.query(sql, params));
       await client.query('COMMIT');
       return result;

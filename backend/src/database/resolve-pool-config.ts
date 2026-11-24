@@ -8,6 +8,9 @@ export async function resolvePoolConfig(options: {
   databaseUrl: string | null;
   dbSecretArn: string | null;
   awsRegion: string;
+  dbHost?: string | null;
+  dbPort?: number | null;
+  dbName?: string | null;
 }): Promise<PoolConfig> {
   if (options.dbSecretArn) {
     const client = new SecretsManagerClient({ region: options.awsRegion });
@@ -17,7 +20,7 @@ export async function resolvePoolConfig(options: {
     if (!result.SecretString) {
       throw new Error('DB secret has no SecretString');
     }
-    return poolConfigFromSecret(result.SecretString);
+    return poolConfigFromSecret(result.SecretString, options);
   }
 
   if (!options.databaseUrl) {
@@ -26,7 +29,10 @@ export async function resolvePoolConfig(options: {
   return { connectionString: options.databaseUrl };
 }
 
-function poolConfigFromSecret(secret: string): PoolConfig {
+function poolConfigFromSecret(
+  secret: string,
+  options: { dbHost?: string | null; dbPort?: number | null; dbName?: string | null },
+): PoolConfig {
   const trimmed = secret.trim();
   if (
     trimmed.startsWith('postgres://') ||
@@ -49,9 +55,9 @@ function poolConfigFromSecret(secret: string): PoolConfig {
 
   const user = asNonEmptyString(parsed.username);
   const password = typeof parsed.password === 'string' ? parsed.password : null;
-  const host = asNonEmptyString(parsed.host);
-  const database = asNonEmptyString(parsed.dbname ?? parsed.database);
-  const port = asPort(parsed.port ?? 5432);
+  const host = asNonEmptyString(parsed.host) ?? options.dbHost ?? null;
+  const database = asNonEmptyString(parsed.dbname ?? parsed.database) ?? options.dbName ?? null;
+  const port = asPort(parsed.port ?? options.dbPort ?? 5432);
 
   if (!user || password === null || password === '' || !host || !database || port === null) {
     throw new Error(

@@ -104,6 +104,26 @@ async function processJob(
       throw new Error('Không trích xuất được nội dung văn bản');
     }
 
+    const embedding = await deps.db.tenantQuery(
+      job.tenantId,
+      `UPDATE documents
+       SET status = 'EMBEDDING'
+       WHERE id = $1 AND tenant_id = $2 AND revision = $3 AND status = 'EXTRACTING'`,
+      [job.documentId, job.tenantId, claimed.revision],
+    );
+    if ((embedding.rowCount ?? 0) === 0) {
+      writeLog({
+        level: 'info',
+        message: 'document skipped',
+        documentId: job.documentId,
+        tenantId: job.tenantId,
+        durationMs: Date.now() - started,
+        chunkCount: 0,
+        reason: 'replaced-or-deleted',
+      });
+      return;
+    }
+
     const first = await embedWithRetry(deps.ai, `${claimed.filename}\n${parts[0]}`);
     const rest = await mapWithConcurrency(parts.slice(1), EMBED_CONCURRENCY, (content) =>
       embedWithRetry(deps.ai, `${claimed.filename}\n${content}`, first.model),
@@ -111,7 +131,7 @@ async function processJob(
     const embedded = [first, ...rest];
     chunkCount = embedded.length;
 
-    const committed = await deps.db.transaction(async (query) => {
+    const committed = await deps.db.asTenant(job.tenantId, async (query) => {
       const locked = await query<{ revision: number }>(
         `SELECT revision
          FROM documents
@@ -192,7 +212,8 @@ async function processJob(
     }
     if (receiveCount >= deps.maxReceiveCount) {
       try {
-        await deps.db.query(
+        await deps.db.tenantQuery(
+          job.tenantId,
           `UPDATE documents
            SET status = 'FAILED', error_message = $3
            WHERE id = $1 AND tenant_id = $2 AND revision = $4 AND status <> 'READY'`,
@@ -235,7 +256,8 @@ async function claimDocument(
   job: { documentId: string; tenantId: string; s3Key: string },
   started: number,
 ): Promise<{ filename: string; revision: number } | null> {
-  const existing = await deps.db.query<DocumentRow>(
+  const existing = await deps.db.tenantQuery<DocumentRow>(
+    job.tenantId,
     `SELECT id, filename, s3_key, status, revision
      FROM documents
      WHERE id = $1 AND tenant_id = $2`,
@@ -256,9 +278,10 @@ async function claimDocument(
   }
 
   const revision = Number(document.revision);
-  const claimed = await deps.db.query(
+  const claimed = await deps.db.tenantQuery(
+    job.tenantId,
     `UPDATE documents
-     SET status = 'PROCESSING', error_message = NULL
+     SET status = 'EXTRACTING', error_message = NULL
      WHERE id = $1 AND tenant_id = $2 AND revision = $3 AND status <> 'READY'`,
     [job.documentId, job.tenantId, revision],
   );
@@ -282,7 +305,8 @@ async function ownsRevision(
   job: { documentId: string; tenantId: string },
   revision: number,
 ): Promise<boolean> {
-  const current = await deps.db.query<{ revision: number }>(
+  const current = await deps.db.tenantQuery<{ revision: number }>(
+    job.tenantId,
     `SELECT revision FROM documents WHERE id = $1 AND tenant_id = $2`,
     [job.documentId, job.tenantId],
   );

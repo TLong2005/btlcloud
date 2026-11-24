@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils";
 
 const STATUS_CLASS: Record<DocumentStatus, string> = {
   UPLOADED: "border-slate-200 bg-slate-100 text-slate-600",
+  EXTRACTING: "border-amber-200 bg-amber-50 text-amber-700",
+  EMBEDDING: "border-amber-200 bg-amber-50 text-amber-700",
   PROCESSING: "border-amber-200 bg-amber-50 text-amber-700",
   READY: "border-emerald-200 bg-emerald-50 text-emerald-700",
   FAILED: "border-red-200 bg-red-50 text-red-700",
@@ -13,6 +15,8 @@ const STATUS_CLASS: Record<DocumentStatus, string> = {
 
 const STATUS_LABEL: Record<DocumentStatus, string> = {
   UPLOADED: "Đã tải lên",
+  EXTRACTING: "Đang trích chữ",
+  EMBEDDING: "Đang tạo vector",
   PROCESSING: "Đang xử lý",
   READY: "Sẵn sàng",
   FAILED: "Lỗi",
@@ -27,7 +31,9 @@ export function DocumentStatusBadge({
 }) {
   const badge = (
     <Badge className={cn("border", STATUS_CLASS[status])}>
-      {status === "PROCESSING" ? <Loader2 className="animate-spin" /> : null}
+      {status === "EXTRACTING" || status === "EMBEDDING" || status === "PROCESSING" ? (
+        <Loader2 className="animate-spin" />
+      ) : null}
       {STATUS_LABEL[status]}
     </Badge>
   );
